@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Dinámico OptiProject</title>
+    
+    <style>
+        /* Estilos Generales y Posicionamiento de la Caja Completa */
+        body { 
+            margin: 0; 
+            font-family: sans-serif; 
+            background-color: #1a1a2e; 
+            color: #f1f1f1; 
+        }
+        /* Estilos Generales y Fondo */
+body {
+    /* 1. RUTA DE LA IMAGEN: Reemplaza 'IMG/image.png' por la ubicación real de tu archivo. */
+    background-image: url(IMG/image.png); 
+    
+    /* 2. PROPIEDADES CLAVE PARA QUE SE VEA BIEN: */
+    background-position: center; /* Centra la imagen */
+    background-repeat: no-repeat; /* Evita que se repita */
+    background-size: cover; /* Hace que la imagen cubra toda el área sin estirarse */
+    background-attachment: fixed; /* Mantiene la imagen fija al hacer scroll (opcional, pero recomendado) */
+    
+    /* 3. Estilos básicos del cuerpo */
+    margin: 0;
+    font-family: sans-serif;
+    color: #f1f1f1; /* Color del texto para que contraste con el fondo oscuro */
+}
+
+        /* Centra la caja completa de los dos menús en la pantalla */
+        .menu-overlay {
+            position: fixed; /* Ocupa toda la ventana */
+            top: 0;
+            left: 0; 
+            width: 100vw;
+            height: 100vh;
+            
+            /* PROPIEDADES CLAVE PARA CENTRAR */
+            display: flex;
+            justify-content: center; /* Centra horizontalmente */
+            align-items: center; /* Centra verticalmente */
+            
+            background-color: rgba(0, 0, 0, 0.5); 
+            z-index: 1000;
+        }
+
+        /* Estilos del Menú Lateral (Izquierda) */
+        .menu-lateral {
+            width: 180px; 
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            padding: 10px 0; 
+            margin-right: 15px; /* Espacio entre el lateral y el centro */
+            align-self: center; /* Asegura que no se alinee arriba o abajo si hay otros elementos */
+        }
+
+        .menu-titulo-lateral { font-size: 1.2em; font-weight: bold; padding: 10px 15px; margin-bottom: 10px; border-bottom: 1px solid #444; }
+        .lista-lateral { list-style: none; padding: 0; margin: 0; }
+        .lista-lateral li { 
+            padding: 10px 15px; cursor: pointer; border-left: 3px solid transparent; 
+            transition: background-color 0.2s, border-left 0.2s; 
+        }
+        .lista-lateral li:hover { background-color: rgba(121, 192, 255, 0.1); }
+        .lista-lateral li.seleccionado-lateral { 
+            background-color: rgba(121, 192, 255, 0.2); 
+            border-left: 3px solid #79c0ff;
+        }
+        .menu-servidores { font-size: 0.8em; padding: 15px; border-top: 1px solid #444; margin-top: 15px; color: #ccc; }
+
+
+        /* Estilos del Menú Principal (Centro) */
+        .menu-contenedor {
+            width: 350px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            padding: 20px;
+        }
+        .menu-busqueda input { width: 100%; padding: 5px 10px; background: #333; border: 1px solid #444; color: #f1f1f1; border-radius: 6px; margin-bottom: 15px; }
+
+        .menu-titulo { font-weight: bold; font-size: 1.1em; padding-bottom: 10px; border-bottom: 1px solid #444; margin-bottom: 10px; }
+
+        .lista-opciones { list-style: none; padding: 0; margin: 0; max-height: 40vh; overflow-y: auto; }
+        .lista-opciones li { padding: 10px 0; border-bottom: 1px solid #3a3a3a; display: flex; align-items: center; cursor: pointer; }
+        .lista-opciones li a { color: #f1f1f1; text-decoration: none; flex-grow: 1; }
+        .lista-opciones li.seleccionado { border-left: 4px solid #79c0ff; background-color: rgba(121, 192, 255, 0.1); padding-left: 6px; }
+        
+        /* Ocultar secciones no activas (CLAVE para el cambio de menú) */
+        .opciones-seccion.oculto { display: none; }
+
+        /* Estilos de botones (Pie de menú) */
+        .botones-pie { display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #444; }
+        .boton-accion { text-decoration: none; padding: 12px; border-radius: 6px; color: #fff; text-align: center; }
+        .boton-accion.principal { flex-grow: 1; background-color: #4a6a6a; }
+        .boton-accion.secundario { width: 120px; background-color: #335050; }
+
+        /* Estilos de Etiquetas (opcional) */
+        .etiqueta { font-size: 0.7em; padding: 2px 5px; border-radius: 4px; margin-left: 10px; font-weight: bold; background-color: #a4e0a4; color: #000; }
+    </style>
+
+</head>
+<body>
+    
+    <div class="menu-overlay">
+        
+        <div class="menu-lateral">
+            <div class="menu-titulo-lateral">CATEGORIAS</div>
+            <ul class="lista-lateral" id="listaCategorias">
+                <li class="seleccionado-lateral" data-target="juegos-pc">Juegos de PC</li>
+                <li data-target="juegos-celular">Juegos de Celular</li>
+                <li data-target="programas">Programas</li>
+            </ul>
+
+            <div class="menu-servidores">
+                Servidores
+                <p>Bedrock (1.7 - 1.20) <br> IP: 181.45.69.10 <br> PUERTO: 20210</p>
+            </div>
+        </div>
+        
+        <div class="menu-contenedor">
+            
+            <div class="menu-busqueda">
+                <input type="text" id="buscadorMenu" placeholder="Buscar opciones...">
+            </div>
+
+            <div class="menu-principal">
+                <div class="menu-titulo">
+                    <i class="icono-lista">☰</i> <span id="tituloSeccion">Juegos de PC</span>
+                </div>
+                
+                <div id="juegos-pc" class="opciones-seccion activo">
+                    <ul class="lista-opciones">
+                        <li 
+                            data-link="[Link PC Juego 1 - DESCARGA]"       
+                            data-link-secundario="[Link PC Juego 1 - GUÍA]"     
+                            data-boton-principal="DESCARGAR"
+                            data-boton-secundario="INSTALAR">
+                            <a href="#">PC Game 1: Dark Souls</a> <span class="etiqueta">NUEVO</span>
+                        </li>
+                        <li 
+                            data-link="[Link PC Juego 2 - DESCARGA]"
+                            data-link-secundario="[Link PC Juego 2 - REQUISITOS]" 
+                            data-boton-principal="DESCARGAR FULL"
+                            data-boton-secundario="VER REQUISITOS">
+                            <a href="#">PC Game 2: The Witcher</a>
+                        </li>
+                        </ul>
+                </div>
+
+                <div id="juegos-celular" class="opciones-seccion oculto">
+                    <ul class="lista-opciones">
+                        <li data-link="[Link Celular 1 - APK]" data-link-secundario="[Link Celular 1 - INFO]" data-boton-principal="INSTALAR APK" data-boton-secundario="WEB OFICIAL">
+                            <a href="#">Mobile Game 1: PUBG</a>
+                        </li>
+                         <li 
+            data-link="[Link directo al APK MOD de 2025]" 
+            data-link-secundario="[Link a la web oficial del MOD]" 
+            data-boton-principal="DESCARGAR APK MOD" 
+            data-boton-secundario="PÁGINA OFICIAL">
+            <a href="#">Terraria MOD (Todas las Clases)</a> <span class="etiqueta recomendado">MOD</span>
+        </li>
+        
+        <li 
+            data-link="[Link al archivo APK principal]" 
+            data-link-secundario="[Link a los archivos OBB/Datos]" 
+            data-boton-principal="DESCARGA APK" 
+            data-boton-secundario="DESCARGA DATOS OBB">
+            <a href="#">Call of Duty Mobile</a>
+        </li>
+
+        <li 
+            data-link="[Link al emulador para Android]" 
+            data-link-secundario="[Link a la guía de configuración]" 
+            data-boton-principal="DESCARGA EMU" 
+            data-boton-secundario="GUÍA DE AJUSTES">
+            <a href="#">Emulador PPSSPP para Android</a>
+        </li>
+
+        </ul>
+                        </ul>
+                              
+                </div>
+                
+                <div id="programas" class="opciones-seccion oculto">
+                    <ul class="lista-opciones">
+                        <li data-link="[Link Programa 1 - DESCARGA]" data-link-secundario="[Link Programa 1 - TUTORIAL]" data-boton-principal="DESCARGAR PROGRAMA" data-boton-secundario="TUTORIAL">
+                            <a href="#">Software Name: Blender</a>
+                        </li>
+                        <li 
+            data-link="[Link al instalador del programa]" 
+            data-link-secundario="[Link al archivo de activación o crack]" 
+            data-boton-principal="INSTALADOR V10.0" 
+            data-boton-secundario="DESCARGAR CRACK">
+            <a href="#">Antivirus Defender Pro</a> <span class="etiqueta recomendado">UTILIDAD</span>
+        </li>
+        
+        <li 
+            data-link="[Link a la herramienta de optimización]" 
+            data-link-secundario="[Link al manual de uso en PDF]" 
+            data-boton-principal="DESCARGAR HERRAMIENTA" 
+            data-boton-secundario="MANUAL DE USO">
+            <a href="#">Optimizador de RAM v3.1</a>
+        </li>
+
+        <li 
+            data-link="[Link a la suite completa de office]" 
+            data-link-secundario="[Link a las notas de versión (changelog)]" 
+            data-boton-principal="DESCARGA SUITE OFFICE" 
+            data-boton-secundario="NOTAS DE VERSIÓN">
+            <a href="#">Office Suite 2024</a>
+        </li>
+
+        </ul>
+                        </ul>
+                </div>
+
+            </div>
+            
+            <div class="menu-pie">
+                <div class="botones-pie">
+                    <a href="#" id="botonDescarga" class="boton-accion principal" target="_blank">SELECCIONA UNA OPCIÓN</a>
+                    <a href="#" id="botonSecundario" class="boton-accion secundario" target="_blank">Opción</a>
+                </div>
+                <p class="pie-texto">DMCA: consultasopti@gmail.com</p>
+            </div>
+        </div>
+    </div>
+     <script>
+    // 1. Selectores Globales
+    const buscador = document.getElementById('buscadorMenu');
+    const listaCategorias = document.getElementById('listaCategorias');
+    const tituloSeccion = document.getElementById('tituloSeccion');
+    const botonDescarga = document.getElementById('botonDescarga');
+    const botonSecundario = document.getElementById('botonSecundario');
+    
+    // Almacena los elementos de la lista actualmente visible
+    let elementosListaActiva = []; 
+
+    // 2. Inicializar Botones Deshabilitados
+    function inicializarBotones() {
+        if (botonDescarga) {
+            botonDescarga.href = '#';
+            botonDescarga.style.pointerEvents = 'none';
+            botonDescarga.style.opacity = '0.5';
+            botonDescarga.innerHTML = 'SELECCIONA UNA OPCIÓN';
+        }
+        if (botonSecundario) {
+            botonSecundario.href = '#';
+            botonSecundario.style.pointerEvents = 'none';
+            botonSecundario.style.opacity = '0.5';
+            botonSecundario.innerHTML = 'Opción'; 
+        }
+    }
+    inicializarBotones();
+
+
+    /* ------------------------------------------- */
+    /* FUNCIÓN DE SELECCIÓN DE ITEM Y DOBLE LINK */
+    /* ------------------------------------------- */
+    function manejarSeleccion(evento) {
+        const elementoSeleccionado = evento.currentTarget;
+        
+        // 1. Quitar la clase 'seleccionado' en la lista ACTIVA
+        elementosListaActiva.forEach(li => li.classList.remove('seleccionado'));
+
+        // 2. Marcar el elemento actual como seleccionado
+        elementoSeleccionado.classList.add('seleccionado');
+
+        // 3. Obtener los 4 atributos de datos (links y textos)
+        const linkPrincipal = elementoSeleccionado.getAttribute('data-link'); 
+        const linkSecundario = elementoSeleccionado.getAttribute('data-link-secundario'); 
+        const textoPrincipal = elementoSeleccionado.getAttribute('data-boton-principal');
+        const textoSecundario = elementoSeleccionado.getAttribute('data-boton-secundario');
+
+        // 4. Actualizar el Botón Principal 
+        if (botonDescarga && linkPrincipal && textoPrincipal) {
+            botonDescarga.href = linkPrincipal; 
+            botonDescarga.innerHTML = textoPrincipal; 
+            botonDescarga.style.pointerEvents = '';
+            botonDescarga.style.opacity = '1';
+        }
+
+        // 5. Actualizar el Botón Secundario 
+        if (botonSecundario && linkSecundario && textoSecundario) {
+            botonSecundario.href = linkSecundario; 
+            botonSecundario.innerHTML = textoSecundario; 
+            botonSecundario.style.pointerEvents = '';
+            botonSecundario.style.opacity = '1';
+        } else if (botonSecundario) {
+            // Deshabilitar si no hay link secundario
+            botonSecundario.href = '#'; 
+            botonSecundario.innerHTML = 'Opción No Disp.';
+            botonSecundario.style.pointerEvents = 'none'; 
+            botonSecundario.style.opacity = '0.5';
+        }
+    }
+
+
+    /* ------------------------------------------- */
+    /* FUNCIÓN DE BÚSQUEDA (FILTRAR) */
+    /* ------------------------------------------- */
+    function filtrarMenu() {
+        // Solo ejecuta si hay una lista activa 
+        if (!elementosListaActiva || elementosListaActiva.length === 0) return;
+        
+        let filtro = buscador.value.toUpperCase();
+        
+        elementosListaActiva.forEach(elementoLi => {
+            let enlace = elementoLi.querySelector('a');
+            let texto = enlace ? (enlace.textContent || enlace.innerText) : "";
+            
+            if (texto.toUpperCase().indexOf(filtro) > -1) {
+                elementoLi.style.display = "";
+            } else {
+                elementoLi.style.display = "none";
+            }
+        });
+
+        // Limpiar la selección al filtrar
+        if (buscador.value.length > 0) {
+            elementosListaActiva.forEach(li => li.classList.remove('seleccionado'));
+            inicializarBotones();
+        }
+    }
+    // Asignar el evento keyup al buscador
+    if (buscador) {
+        buscador.addEventListener('keyup', filtrarMenu);
+    }
+
+
+    /* ------------------------------------------- */
+    /* ASIGNADOR DE EVENTOS Y BÚSQUEDA DE LISTA ACTIVA */
+    /* ------------------------------------------- */
+    function asignarEventosListaActiva() {
+        // Encuentra la lista de opciones que está visible (la que tiene la clase 'activo')
+        const seccionActiva = document.querySelector('.opciones-seccion.activo');
+        if (seccionActiva) {
+            const listaOpcionesActiva = seccionActiva.querySelector('.lista-opciones'); 
+            elementosListaActiva = Array.from(listaOpcionesActiva.getElementsByTagName('li'));
+        } else {
+            elementosListaActiva = [];
+        }
+
+        // Re-asigna el listener de SELECCIÓN (manejarSeleccion) a los nuevos elementos
+        elementosListaActiva.forEach(li => {
+            li.onclick = manejarSeleccion;
+            li.classList.remove('seleccionado');
+            li.style.display = ""; 
+        });
+    }
+
+
+    /* ------------------------------------------- */
+    /* FUNCIÓN DE CONTROL DE MENÚ LATERAL (CAMBIAR CONTENIDO) */
+    /* ------------------------------------------- */
+    function cambiarSeccion(evento) {
+        const elementoSeleccionado = evento.currentTarget;
+        const targetId = elementoSeleccionado.getAttribute('data-target');
+        
+        // Ocultar todas las secciones y quitar selección lateral
+        document.querySelectorAll('.opciones-seccion').forEach(seccion => {
+            seccion.classList.remove('activo');
+            seccion.classList.add('oculto');
+        });
+        document.querySelectorAll('.lista-lateral li').forEach(li => {
+            li.classList.remove('seleccionado-lateral');
+        });
+
+        // Mostrar la sección destino y marcar el elemento lateral
+        const seccionDestino = document.getElementById(targetId);
+        if (seccionDestino) {
+            seccionDestino.classList.remove('oculto');
+            seccionDestino.classList.add('activo');
+            elementoSeleccionado.classList.add('seleccionado-lateral');
+            
+            tituloSeccion.textContent = elementoSeleccionado.textContent;
+            
+            buscador.value = ''; // Limpiar buscador
+            inicializarBotones(); // Resetear botones
+            
+            // ¡CLAVE! Conectar los nuevos elementos de la lista al JavaScript
+            asignarEventosListaActiva(); 
+        }
+    }
+
+
+    /* ------------------------------------------- */
+    /* SETUP INICIAL (Al cargar la página) */
+    /* ------------------------------------------- */
+    
+    // 1. Asignar el evento click a cada opción del menú lateral
+    if (listaCategorias) {
+        listaCategorias.querySelectorAll('li').forEach(li => {
+            li.addEventListener('click', cambiarSeccion);
+        });
+    }
+
+    // 2. Configurar la lista activa inicial (la que tiene la clase "activo" por defecto)
+    asignarEventosListaActiva(); 
+</script>
+</body>
+</html>
